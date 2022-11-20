@@ -1,0 +1,2 @@
+[servers]
+slave_node1 ansible_host=192.168.3.11 ansible_ssh_pass=pass ansible_ssh_user=user
