@@ -1,0 +1,62 @@
+---
+
+- name: install app 
+  hosts: servers
+  become: yes
+  remote_user: root
+  vars: 
+    service: nginx
+  tasks:
+  - name: create file
+    local_action: ansible.builtin.file path=/home/john/ansible_check_nginx/file.log state=touch become=no
+
+  - name: checking service status
+    command: systemctl status "{{ service }}"
+    register: result
+    ignore_errors: yes
+
+  - name: Check service
+    ansible.builtin.systemd:
+      name: "{{ service }}"
+    register: res
+
+  - name: log append state not running
+    become: false
+    local_action: shell printf "$(date) Сервис не доступен\n" >> /home/john/ansible_check_nginx/file.log
+    when: res.status.ActiveState == "inactive"
+
+  - name: log append state running
+    become: false
+    local_action: shell printf "$(date) Сервис доступен\n" >> /home/john/ansible_check_nginx/file.log
+    when: res.status.ActiveState == "active"
+
+  - name: starting service
+    ansible.builtin.systemd:
+      name: "{{ service }}"
+      state: restarted
+
+  - name: check service 
+    ansible.builtin.systemd:
+      name: "{{ service }}"
+      state: restarted
+    register: result
+
+  - name: log append result restarted
+    local_action: shell printf "$(date) Сервис успешно запущен\n" >> /home/john/ansible_check_nginx/file.log
+    when: result.status.ActiveState == "active"
+
+  - name: send message with not starting service
+    community.general.mail:
+      host: smtp.gmail.com
+      port: 587
+      username: you_mail@gmail.com
+      password: pass
+      to: John Smith <to_mail@gmail.com>
+      subject: Ansible-report
+      body: "{{ ansible_date_time.iso8601 }}: {{ service }} {{ result.status.ActiveState }}"
+    delegate_to: localhost
+    when: result.status.ActiveState == "inactive"
+    
+  - name: log append result not restarted
+    local_action: shell printf "{{ ansible_date_time.iso8601 }}"':' "{{ service }} {{ result.status.ActiveState }}" >> /home/john/ansible/file.log
+    when: result.status.ActiveState == "inactive"
