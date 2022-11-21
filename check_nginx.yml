@@ -2,13 +2,11 @@
 
 - name: install app 
   hosts: servers
-  become: yes
-  remote_user: root
   vars: 
     service: nginx
   tasks:
   - name: create file
-    local_action: ansible.builtin.file path=/home/john/ansible_check_nginx/file.log state=touch become=no
+    local_action: ansible.builtin.file path=/home/john/ansible_check_nginx/file.log state=touch
 
   - name: checking service status
     command: systemctl status "{{ service }}"
