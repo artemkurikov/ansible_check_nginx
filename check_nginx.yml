@@ -28,15 +28,10 @@
     local_action: shell printf "$(date) Сервис доступен\n" >> /home/john/ansible_check_nginx/file.log
     when: res.status.ActiveState == "active"
 
-  - name: starting service
-    ansible.builtin.systemd:
-      name: "{{ service }}"
-      state: restarted
-
   - name: check service 
     ansible.builtin.systemd:
       name: "{{ service }}"
-      state: restarted
+      state: started
     register: result
 
   - name: log append result restarted
